@@ -20,6 +20,7 @@ setwd("E:/Cloudstation/R/reproducibleresearch/RepData_PeerAssessment1")
 options(warn=-1)
 library(knitr)
 library(dplyr)
+library(ggplot2)
 opts_chunk$set(echo = TRUE, results="hide")
 ``` 
 
@@ -161,7 +162,7 @@ There is a small diference between the original and clean data, especially in th
 
 A new variable is added to the data frame with clean data (i.e. where the missing values were replaced by the respective interval averages). This new variable describes whether the date is a weekday or a weekend day. This is done with a combination of a for loop and an if-else statement. This method results in a variable with character class, which is then manually converted to factor class. 
 
-```{r e}
+```{r weekdays}
 activityclean <- mutate(activityclean, daytype = weekdays(date))
 for (i in 1:length(activityclean[,1])){
    activityclean[i, 4] <-
@@ -175,4 +176,20 @@ for (i in 1:length(activityclean[,1])){
 activityclean$daytype <- as.factor(activityclean$daytype)
 ```
 
-The panels plots have not yet been made (lack of time). 
+For the comparison between weekday and weekend activity, the number of steps per interval have to be calculated again, however now using the cleaned up data and with the extra factor variable "daytype". The ggplot2 method of plotting is used for easy panelling ('faceting'). 
+
+```{r panelplot}
+stepsperintervalclean <- activityclean %>%
+                        group_by(interval, daytype) %>%
+                        summarise_each(funs(sum, mean, median), steps, daytype)
+
+qplot(interval,mean,data=stepsperintervalclean,
+                        geom="line",
+                        facets=daytype~.,
+                        xlab="5-minute interval",
+                        ylab="Average",
+                        main="Average number of steps taken")
+
+```
+
+It seems that the distribution of walking activity is more concentrated on a very brief moment during the morning on weekdays, whereas it is more evenly distributed throughout the day on weekend days. 

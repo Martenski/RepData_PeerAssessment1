@@ -32,6 +32,7 @@ library(dplyr)
 ```
 
 ```r
+library(ggplot2)
 opts_chunk$set(echo = TRUE, results="hide")
 ```
 
@@ -158,7 +159,8 @@ length(missingindex)
 
 [1] 2304
 
-The NA's have been replaced by the average number of steps of the interval category in which it falls.
+The NA's have been replaced by the average number of steps of the interval category in which it falls. This seems to be the best (simple) strategy, since the variance in steps per day is larger than the variance in steps per interval. 
+
 
 
 ```r
@@ -170,7 +172,7 @@ for(i in 1:length(missingindex)) {
 }
 ```
 
-A new dataset, "stepsperdayclean", calculates the new means and medians. 
+A new dataset, "stepsperdayclean", calculates the new means and medians. The histogram is immediately added without further comments. 
 
 
 ```r
@@ -209,7 +211,7 @@ There is a small diference between the original and clean data, especially in th
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
-A new variable is added to the data frame with clean (i.e. missing values replaced by interval averages) data on number of steps per day and interval. This is done with a combination of a for loop and an if-else statement.  
+A new variable is added to the data frame with clean data (i.e. where the missing values were replaced by the respective interval averages). This new variable describes whether the date is a weekday or a weekend day. This is done with a combination of a for loop and an if-else statement. This method results in a variable with character class, which is then manually converted to factor class. 
 
 
 ```r
@@ -226,4 +228,22 @@ for (i in 1:length(activityclean[,1])){
 activityclean$daytype <- as.factor(activityclean$daytype)
 ```
 
-The panels plots have not yet been made (lack of time). 
+For the comparison between weekday and weekend activity, the number of steps per interval have to be calculated again, however now using the cleaned up data and with the extra factor variable "daytype". The ggplot2 method of plotting is used for easy panelling ('faceting'). 
+
+
+```r
+stepsperintervalclean <- activityclean %>%
+                        group_by(interval, daytype) %>%
+                        summarise_each(funs(sum, mean, median), steps, daytype)
+
+qplot(interval,mean,data=stepsperintervalclean,
+                        geom="line",
+                        facets=daytype~.,
+                        xlab="5-minute interval",
+                        ylab="Average",
+                        main="Average number of steps taken")
+```
+
+![](PA1_template_files/figure-html/panelplot-1.png) 
+
+It seems that the distribution of walking activity is more concentrated on a very brief moment during the morning on weekdays, whereas it is more evenly distributed throughout the day on weekend days. 
